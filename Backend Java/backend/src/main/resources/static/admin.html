@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="home-body">
+
+<div class="container slide-in">
+
+    <div class="top-bar">
+        <h2>Administrator Dashboard</h2>
+        <button onclick="goHome()" class="home-btn">Logout</button>
+    </div>
+
+    <div class="card fade-in">
+        <h3>Documents in Database</h3>
+        <button onclick="loadDocuments()">View Documents</button>
+        <div id="docs">Click load to view documents...</div>
+    </div>
+
+    <div class="card fade-in no-hover">
+    <h3>User Logs</h3>
+
+    <button onclick="loadLogs()">Load Logs</button>
+
+    <div id="logs">Click load to view logs...</div>
+
+    <div class="admin-tools">
+        <button class="btn-outline" onclick="openModal('deleteUserModal')">
+            Delete User
+        </button>
+
+        <button class="btn-outline" onclick="openModal('editUserModal')">
+            Edit User
+        </button>
+
+        <button class="btn-outline" onclick="openModal('addLawModal')">
+            Add Law
+        </button>
+
+        <button class="btn-outline" onclick="openModal('deleteLawModal')">
+            Delete Law
+        </button>
+    </div>
+</div>
+
+</div>
+
+<!-- ================= MODALS ================= -->
+<div id="deleteUserModal" class="modal">
+    <div class="modal-content">
+        <h3>Delete User</h3>
+
+        <!-- USERS LIST -->
+        <div id="userList" style="max-height:150px; overflow:auto; margin-bottom:10px;">
+            Loading users...
+        </div>
+
+        <input type="text" id="deleteUserId" placeholder="Enter the ID">
+
+        <div class="modal-buttons">
+            <button class="btn-outline" onclick="deleteUser()">Delete</button>
+            <button onclick="closeModal('deleteUserModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <h3>Edit User</h3>
+
+        <!-- USERS LIST -->
+        <div id="editUserList" style="max-height:150px; overflow:auto; margin-bottom:10px;">
+            Loading users...
+        </div>
+
+        <input type="text" id="editUserId" placeholder="Enter User ID">
+        <input type="text" id="editUsername" placeholder="New User Identifier"> <!-- label kept -->
+
+        <!-- NEW: USER TYPE DROPDOWN -->
+        <select id="editUserType" style="margin-top:10px; padding:10px; border-radius:8px; width:100%;">
+            <option value="Legal Practitioner">Legal Practitioner</option>
+            <option value="Deal-Making Professional">Deal-Making Professional</option>
+        </select>
+
+        <div class="modal-buttons">
+            <button class="btn-outline" onclick="editUser()">Save</button>
+            <button onclick="closeModal('editUserModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="addLawModal" class="modal">
+    <div class="modal-content">
+        <h3>Add Law</h3>
+
+        <!-- LAWS LIST -->
+        <div id="lawList" style="max-height:150px; overflow:auto; margin-bottom:10px;">
+            Loading laws...
+        </div>
+
+        <input type="text" id="lawName" placeholder="Law Name">
+        <input type="text" id="lawSection" placeholder="Section">
+        <textarea id="lawDescription" placeholder="Law Description"></textarea>
+
+        <div class="modal-buttons">
+            <button class="btn-outline" onclick="addLaw()">Add</button>
+            <button onclick="closeModal('addLawModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="deleteLawModal" class="modal">
+    <div class="modal-content">
+        <h3>Delete Law</h3>
+
+        <!-- LAWS LIST -->
+        <div id="deleteLawList" style="max-height:150px; overflow:auto; margin-bottom:10px;">
+            Loading laws...
+        </div>
+
+        <input type="text" id="deleteLawId" placeholder="Enter Law ID">
+
+        <div class="modal-buttons">
+            <button class="btn-outline" onclick="deleteLaw()">Delete</button>
+            <button onclick="closeModal('deleteLawModal')">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    if (sessionStorage.getItem("role") !== "admin") {
+        window.location.href = "admin-login.html";
+    }
+
+    //IP ADDRESS
+    const API_BASE = "http://192.168.0.244:8081";
+
+    function goHome() {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+    }
+
+    function loadDocuments() {
+        document.getElementById("docs").innerHTML = "Loading...";
+
+        fetch(`${API_BASE}/api/documents/all`)
+        .then(async res => {
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to load documents");
+            }
+
+            return data;
+        })
+        .then(data => {
+
+            console.log("DOCUMENTS:", data);
+
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById("docs").innerHTML = "No documents found.";
+                return;
+            }
+
+            let html = "<ul>";
+
+            data.forEach(doc => {
+
+                const name = doc.fileName || "Unnamed document";
+                const id = doc.id || "N/A";
+
+                html += `
+                    <li>
+                        <b>ID:</b> ${id} |
+                        <b>Name:</b> ${name}
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("docs").innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById("docs").innerHTML =
+                `<span style="color:red;">Failed to load documents</span>`;
+        });
+    }
+
+    function loadLogs() {
+        document.getElementById("logs").innerHTML = "Loading...";
+
+        fetch(`${API_BASE}/api/admin/log`)
+        .then(async res => {
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to load logs");
+            }
+
+            return data;
+        })
+        .then(data => {
+
+            console.log("LOGS:", data);
+
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById("logs").innerHTML = "No logs found.";
+                return;
+            }
+
+            let html = "<ul>";
+
+            data.forEach(log => {
+
+                html += `
+                    <li>
+                            <b>User:</b> ${log.userIdentifier} <br>
+                            <b>Document:</b> ${log.fileName} <br>
+                            <b>Action:</b> ${log.action} <br>
+                            <b>Time:</b> ${log.timestamp ?? "N/A"}
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("logs").innerHTML = html;
+        })
+        .catch(err => {
+            console.error("LOG ERROR:", err);
+            document.getElementById("logs").innerHTML =
+                `<span style="color:red;">Failed to load logs: ${err.message}</span>`;
+        });
+    }
+
+    function openModal(id) {
+
+        document.getElementById(id).style.display = "flex";
+
+        if (id === "deleteUserModal") {
+            loadUsers();
+        }
+
+        if (id === "editUserModal") {
+            loadUsersForEdit();
+        }
+
+        if (id === "addLawModal") {
+            loadLaws(); 
+        }
+
+        if (id === "deleteLawModal") {
+            loadLawsForDelete();
+        }
+    }
+
+    //Load the users
+    function loadUsers() {
+
+        document.getElementById("userList").innerHTML = "Loading users...";
+
+        fetch(`${API_BASE}/api/admin/users`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById("userList").innerHTML = "No users found.";
+                return;
+            }
+
+            let html = "<ul>";
+
+            data.forEach(user => {
+                html += `
+                    <li>
+                        <b>ID:</b> ${user.id} |
+                        <b>Name:</b> ${user.name} |
+                        <b>User ID:</b> ${user.userIdentifier} |
+                        <b>Type:</b> ${user.userType ?? "N/A"} 
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("userList").innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById("userList").innerHTML =
+                `<span style="color:red;">Failed to load users</span>`;
+        });
+    }
+
+    function deleteUser() {
+
+        const userIdRaw = document.getElementById("deleteUserId").value.trim();
+
+        const userId = Number(userIdRaw);
+
+        if (!userIdRaw || isNaN(userId) || userId <= 0) {
+            alert("Please enter a valid numeric User ID");
+            return;
+        }
+
+        fetch(`${API_BASE}/api/admin/users/${userId}`, {
+            method: "DELETE"
+        })
+        .then(async res => {
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) {
+                throw new Error(data.error || "Delete failed");
+            }
+
+            return data;
+        })
+        .then(data => {
+
+            alert(data.message || "User deleted successfully");
+
+            document.getElementById("deleteUserId").value = "";
+            loadUsers();
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Delete failed: " + err.message);
+        });
+    }
+
+    function loadUsersForEdit() {
+
+        document.getElementById("editUserList").innerHTML = "Loading users...";
+
+        fetch(`${API_BASE}/api/admin/users`)
+        .then(res => res.json())
+        .then(data => {
+
+            let html = "<ul>";
+
+            data.forEach(user => {
+                html += `
+                    <li>
+                        <b>ID:</b> ${user.id} |
+                        <b>Name:</b> ${user.name} |
+                        <b>User ID:</b> ${user.userIdentifier} |
+                        <b>Type:</b> ${user.userType ?? "N/A"} 
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("editUserList").innerHTML = html;
+        });
+    }
+
+    function editUser() {
+
+        const userId = document.getElementById("editUserId").value;
+        const username = document.getElementById("editUsername").value;
+        const userType = document.getElementById("editUserType").value; 
+
+        fetch(`${API_BASE}/api/admin/users/${userId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ 
+                userIdentifier: username,
+                userType: userType 
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            alert("User updated successfully");
+            loadUsersForEdit();
+        });
+    }
+
+    function addLaw() {
+
+        const lawName = document.getElementById("lawName").value;
+        const section = document.getElementById("lawSection").value;
+        const description = document.getElementById("lawDescription").value;
+
+        fetch(`${API_BASE}/api/admin/laws`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                lawName,
+                section,
+                description
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            alert("Law added successfully");
+            loadLaws();
+        });
+    }
+
+    function loadLaws() {
+
+        document.getElementById("lawList").innerHTML = "Loading laws...";
+
+        fetch(`${API_BASE}/api/admin/laws`)
+        .then(res => res.json())
+        .then(data => {
+
+            let html = "<ul>";
+
+            data.forEach(law => {
+                html += `
+                    <li>
+                        <b>ID:</b> ${law.id} |
+                        <b>Name:</b> ${law.lawName}
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("lawList").innerHTML = html;
+        });
+    }
+
+    function loadLawsForDelete() {
+
+        document.getElementById("deleteLawList").innerHTML = "Loading laws...";
+
+        fetch(`${API_BASE}/api/admin/laws`)
+        .then(res => res.json())
+        .then(data => {
+
+            let html = "<ul>";
+
+            data.forEach(law => {
+                html += `
+                    <li>
+                        <b>ID:</b> ${law.id} |
+                        <b>Name:</b> ${law.lawName}
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("deleteLawList").innerHTML = html;
+        });
+    }
+
+    function deleteLaw() {
+
+        const lawId = document.getElementById("deleteLawId").value;
+
+        fetch(`${API_BASE}/api/admin/laws/${lawId}`, {
+            method: "DELETE"
+        })
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            alert("Law deleted successfully");
+            loadLawsForDelete();
+        });
+    }
+
+        function closeModal(id) {
+
+        const modal = document.getElementById(id);
+
+        modal.style.display = "none";
+
+        modal.querySelectorAll("input, textarea").forEach(el => el.value = "");
+    }
+
+</script>
+</body>
+</html>

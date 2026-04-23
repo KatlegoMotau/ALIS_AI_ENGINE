@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ALIS AI System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="home-body">
+
+<div class="home-container fade-in">
+
+    <!-- LOGO -->
+    <div class="logo-container">
+        <img src="logo.png" alt="ALIS AI Logo" class="logo">
+    </div>
+
+    <!-- DESCRIPTION -->
+    <p class="subtitle">
+        Analyze legal documents, detect risks, and ensure compliance using AI-powered insights.
+    </p>
+
+    <!-- ACCESS CARDS -->
+    <div class="home-buttons">
+
+        <div class="access-card user-card" onclick="goUser()">
+            <h2>User Access</h2>
+            <p>Upload and analyze legal documents</p>
+        </div>
+
+        <div class="access-card admin-card" onclick="goAdmin()">
+            <h2>Administrator</h2>
+            <p>View system logs and document database</p>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    function goUser() {
+        window.location.href = "register_or_login.html";
+    }
+
+    function goAdmin() {
+        sessionStorage.removeItem("role"); 
+        window.location.href = "admin-login.html";
+    }
+</script>
+
+</body>
+</html>

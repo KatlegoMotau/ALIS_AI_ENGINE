@@ -1,0 +1,130 @@
+CREATE TABLE admin (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE app_user (
+    id SERIAL PRIMARY KEY,
+    user_identifier VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	user_type VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE document (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    file_name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    embedding JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE clause (
+    id SERIAL PRIMARY KEY,
+    document_id INT NOT NULL,
+    clause_text TEXT NOT NULL,
+
+    CONSTRAINT fk_document
+        FOREIGN KEY (document_id)
+        REFERENCES documents(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE law (
+    id SERIAL PRIMARY KEY,
+    law_name VARCHAR(255) NOT NULL,
+    section VARCHAR(100),
+    description TEXT NOT NULL
+);
+
+CREATE TABLE rule (
+    id SERIAL PRIMARY KEY,
+    law_id INT NOT NULL,
+    keyword VARCHAR(100) NOT NULL,
+    requirements TEXT NOT NULL,
+    risk_level VARCHAR(50) NOT NULL,
+    suggestion TEXT NOT NULL,
+    edited BOOLEAN DEFAULT FALSE,
+    CONSTRAINT fk_law
+        FOREIGN KEY (law_id)
+        REFERENCES laws(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE summary (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    document_id INT NOT NULL,
+    rule_id INT NOT NULL,
+    similarity_check FLOAT,
+    compliance_check TEXT,
+    report TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_summary_user
+        FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_summary_doc
+        FOREIGN KEY (document_id) REFERENCES documents(id),
+    CONSTRAINT fk_summary_rule
+        FOREIGN KEY (rule_id) REFERENCES rules(id)
+);
+
+CREATE TABLE log (
+    id SERIAL PRIMARY KEY,
+    user_id INT,
+    document_id INT,
+    action TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (document_id) REFERENCES documents(id)
+);
+
+INSERT INTO admin (username, password)
+VALUES 
+('admin', 'admin123'),
+('superadmin', 'securepass');
+	   
+INSERT INTO law (law_name, section, description) VALUES
+('Contract Law Principles', 'General', 'Governs agreements between parties and enforceability'),
+('Consumer Protection Act', 'CPA Section 48', 'Protects consumers from unfair contract terms'),
+('POPIA', 'Section 11', 'Regulates lawful processing of personal information'),
+('Companies Act', 'Section 76', 'Directors duties and corporate governance');
+
+-- CONTRACT LAW
+INSERT INTO rule (law_id, keyword, requirements, risk_level, suggestion) VALUES
+(1, 'agreement', 'Must include offer, acceptance, and consideration', 'High',
+ 'Ensure contract includes valid offer, acceptance and consideration'),
+(1, 'termination', 'Contract must define termination conditions', 'Medium',
+ 'Add clear termination clause with notice period'),
+(1, 'liability', 'Liability must be limited', 'High',
+ 'Avoid unlimited liability, include financial cap');
+
+-- CONSUMER PROTECTION ACT
+INSERT INTO rule VALUES
+(DEFAULT, 2, 'unfair terms', 'No unfair or one-sided clauses allowed', 'High',
+ 'Ensure contract is balanced and fair to consumers', FALSE),
+(DEFAULT, 2, 'plain language', 'Contract must be understandable', 'Medium',
+ 'Rewrite clauses in plain language', FALSE);
+
+
+-- POPIA
+INSERT INTO rule VALUES
+(DEFAULT, 3, 'personal information', 'Must obtain consent before collecting data', 'High',
+ 'Add consent clause for personal data processing', FALSE),
+(DEFAULT, 3, 'data protection', 'Data must be secured', 'High',
+ 'Add clause for encryption and protection of personal data', FALSE);
+
+
+-- COMPANIES ACT
+INSERT INTO rule VALUES
+(DEFAULT, 4, 'director duties', 'Directors must act in good faith', 'High',
+ 'Ensure governance clauses enforce accountability', FALSE),
+(DEFAULT, 4, 'compliance', 'Company must comply with regulations', 'Medium',
+ 'Include compliance monitoring clause', FALSE);

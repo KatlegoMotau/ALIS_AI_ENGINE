@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="home-body">
+
+<!-- HOME ICON -->
+<img src="home.png" class="home-icon" onclick="goHome()">
+
+<div class="login-container fade-in">
+
+    <h2>Administrator Login</h2>
+
+    <input type="text" id="adminUsername" placeholder="Enter username" />
+    <input type="password" id="adminPassword" placeholder="Enter password" />
+
+    <button onclick="loginAdmin()">Login</button>
+
+    <p id="error" class="error"></p>
+
+</div>
+
+<script>
+
+   function loginAdmin() {
+
+    const username = document.getElementById("adminUsername").value;
+    const password = document.getElementById("adminPassword").value;
+
+    //IP ADDRESS
+    fetch("http://192.168.0.244:8081/api/admin/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username, password })
+    })
+    .then(async res => {
+
+        const text = await res.text();
+
+        console.log("RAW RESPONSE:", text);
+
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            throw new Error("Invalid JSON from server");
+        }
+
+        if (!res.ok) {
+            throw new Error(data.error || "Login failed");
+        }
+
+        return data;
+    })
+    .then(data => {
+
+        console.log("ADMIN LOGIN DATA:", data);
+
+        // FIX: support BOTH id and adminId
+        const adminId = data.adminId || data.id;
+
+        if (!adminId) {
+            document.getElementById("error").innerText =
+                "Invalid server response: missing admin ID";
+            return;
+        }
+
+        sessionStorage.setItem("role", "admin");
+        sessionStorage.setItem("admin_id", adminId);
+
+        window.location.href = "admin.html";
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById("error").innerText = err.message;
+    });
+}
+
+function goHome() {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+}
+
+</script>
+
+</body>
+</html>

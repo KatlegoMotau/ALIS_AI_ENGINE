@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<div class="container slide-in">
+
+    <div class="top-bar">
+        <h2>User Dashboard</h2>
+        <button onclick="goHome()" class="home-btn">Home</button>
+    </div>
+
+    <div class="card">
+        <h3>Upload Legal Document</h3>
+        <input type="file" id="fileInput" />
+
+        <button onclick="analyzeDocument()">Analyze Document</button>
+
+        <!-- NEW BUTTON ADDED -->
+        <button onclick="openMyDocuments()" class="btn-outline">View My Documents</button>
+    </div>
+
+    <div id="output"></div>
+
+</div>
+
+<script>
+
+    if (!sessionStorage.getItem("user_identifier")) {
+        window.location.href = "index.html";
+    }
+
+    function goHome() {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+    }
+
+    let lastDocumentId = null;
+
+    // ================= ANALYZE DOCUMENT =================
+    function analyzeDocument() {
+
+        const fileInput = document.getElementById("fileInput");
+
+        if (!fileInput.files.length) {
+            alert("Please select a file");
+            return;
+        }
+
+        const userIdentifier = sessionStorage.getItem("user_identifier");
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("user_id", userIdentifier);
+
+        document.getElementById("output").innerHTML =
+            `<div class="card">Analyzing document...</div>`;
+
+        //IP ADDRESS
+        fetch("http://192.168.0.244:8081/api/documents/upload", {
+            method: "POST",
+            body: formData
+        })
+
+        .then(async res => {
+
+            const text = await res.text();
+            console.log("RAW BACKEND RESPONSE:", text);
+
+            if (!res.ok) {
+                throw new Error(text);
+            }
+
+            return JSON.parse(text);
+        })
+
+        .then(data => {
+
+            console.log("PARSED RESPONSE:", data);
+
+            if (data.error) {
+                document.getElementById("output").innerHTML =
+                    `<div class="card" style="color:red;">${data.error}</div>`;
+                return;
+            }
+
+            let html = "";
+
+            const risks = data.risks ?? [];
+            const compliance = data.compliance_issues ?? [];
+            const suggestions = data.suggestions ?? [];
+
+            const newId = data.new_document_id ?? null;
+            const existingId = data.existing_document_id ?? null;
+
+            // FIX: correct ID selection
+            if (data.message && existingId) {
+                lastDocumentId = existingId;
+            } else {
+                lastDocumentId = newId;
+            }
+
+            // ================= DUPLICATE DOCUMENT =================
+            if (data.message && existingId) {
+
+                html = `
+                    <div class="card">
+                        <h3>Duplicate Document Detected</h3>
+                        <p>${data.message}</p>
+                        <p><b>Similarity:</b> ${data.similarity_percentage ?? 0}%</p>
+
+                        <button class="btn-outline" onclick="deleteDocument()">
+                            Delete Existing Document
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById("output").innerHTML = html;
+                return;
+            }
+
+            // ================= NORMAL ANALYSIS =================
+            html = `
+                <div class="card">
+                    <h3>Analysis Report</h3>
+                    <p><b>Document ID:</b> ${newId ?? "N/A"}</p>
+                    <p><b>Similarity:</b> ${data.similarity_percentage ?? 0}%</p>
+                    <p><b>Clauses Found:</b> ${data.clauses_found ?? 0}</p>
+                </div>
+            `;
+
+            if (risks.length > 0) {
+                html += `<div class="card"><h3>Risks</h3>`;
+                risks.forEach(r => {
+                    html += `<p>${r.risk} → ${r.suggestion}</p>`;
+                });
+                html += `</div>`;
+            }
+
+            if (compliance.length > 0) {
+                html += `<div class="card"><h3>Compliance Issues</h3>`;
+                compliance.forEach(c => {
+                    html += `<p>${c.law}: ${c.issue}</p>`;
+                });
+                html += `</div>`;
+            }
+
+            if (suggestions.length > 0) {
+                html += `<div class="card"><h3>Suggestions</h3>`;
+                suggestions.forEach(s => {
+                    html += `<p>✔ ${s}</p>`;
+                });
+                html += `</div>`;
+            }
+
+            if (lastDocumentId) {
+                html += `
+                    <div style="margin-top:20px;">
+                        <button class="btn-outline" onclick="deleteDocument()">
+                            Delete Document
+                        </button>
+                    </div>
+                `;
+            }
+
+            document.getElementById("output").innerHTML = html;
+        })
+
+        .catch(err => {
+            document.getElementById("output").innerHTML =
+                `<div class="card" style="color:red;">${err.message}</div>`;
+        });
+    }
+
+
+    // ================= DELETE DOCUMENT =================
+    function deleteDocument() {
+
+        if (!lastDocumentId) {
+            alert("No document to delete");
+            return;
+        }
+
+        //IP ADDRESS
+        fetch(`http://192.168.0.244:8081/api/documents/${lastDocumentId}`, {
+            method: "DELETE"
+        })
+        .then(async res => {
+
+            const text = await res.text();
+
+            if (!res.ok) {
+                throw new Error(text || "Delete failed");
+            }
+
+            return text ? JSON.parse(text) : { message: "Deleted successfully" };
+        })
+        .then(data => {
+
+            alert(data.message);
+            lastDocumentId = null;
+            document.getElementById("output").innerHTML = "";
+        })
+        .catch(err => {
+            alert("Delete failed: " + err.message);
+        });
+    }
+
+    //View My Documents
+    function openMyDocuments() {
+
+        document.getElementById("myDocsModal").style.display = "flex";
+
+        const userIdentifier = sessionStorage.getItem("user_identifier");
+
+        console.log("Loading docs for:", userIdentifier);
+        
+        //IP ADDRESS
+        fetch(`http://192.168.0.244:8081/api/documents/user/${userIdentifier}`)
+        .then(res => res.json())
+        .then(data => {
+
+            console.log("DOCUMENTS:", data);
+
+            if (!Array.isArray(data) || data.length === 0) {
+                document.getElementById("myDocsList").innerHTML =
+                    "No documents found.";
+                return;
+            }
+
+            let html = "<ul>";
+
+            data.forEach(doc => {
+
+                console.log("DOC ITEM:", doc);
+
+                html += `
+                    <li style="margin-bottom:10px;">
+                        <b>${doc.fileName}</b>
+
+                        <button onclick="deleteUserDocument(${doc.id})"
+                            class="btn-outline"
+                            style="margin-left:10px;">
+                            Delete
+                        </button>
+                    </li>
+                `;
+            });
+
+            html += "</ul>";
+
+            document.getElementById("myDocsList").innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById("myDocsList").innerHTML =
+                "Failed to load documents";
+        });
+    }
+
+    function deleteUserDocument(docId) {
+
+        console.log("DELETE CLICKED ID:", docId);
+
+        if (!docId || docId === "undefined") {
+            alert("Invalid document ID");
+            return;
+        }
+
+        //IP ADDRESS
+        fetch(`http://192.168.0.244:8081/api/documents/${docId}`, {
+            method: "DELETE"
+        })
+        .then(async res => {
+
+            const text = await res.text();
+            console.log("RAW DELETE RESPONSE:", text);
+
+            if (!res.ok) {
+                throw new Error(text || "Delete failed");
+            }
+
+            return text ? JSON.parse(text) : { message: "Deleted successfully" };
+        })
+        .then(data => {
+
+            alert(data.message || "Document deleted");
+
+            openMyDocuments();
+        })
+        .catch(err => {
+            console.error("DELETE ERROR:", err);
+            alert("Delete failed: " + err.message);
+        });
+    }
+
+    function closeMyDocs() {
+        document.getElementById("myDocsModal").style.display = "none";
+    }
+
+</script>
+
+<div id="myDocsModal" class="modal">
+    <div class="modal-content">
+
+        <h3>My Uploaded Documents</h3>
+
+        <div id="myDocsList">
+            Loading documents...
+        </div>
+
+        <button onclick="closeMyDocs()" class="btn-outline">
+            Close
+        </button>
+
+    </div>
+</div>
+
+</body>
+</html>

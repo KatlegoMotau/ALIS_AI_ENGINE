@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Access Selection</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="home-body">
+
+<div class="home-container fade-in">
+
+    <!-- LOGO -->
+    <div class="logo-container">
+        <img src="logo.png" alt="ALIS AI Logo" class="logo">
+    </div>
+
+    <h2>Select Your Access</h2>
+
+    <div class="home-buttons">
+
+        <div class="access-card user-card" onclick="goRegister()">
+            <h2>Register</h2>
+            <p>Create a new account</p>
+        </div>
+
+        <div class="access-card admin-card" onclick="goLogin()">
+            <h2>Login</h2>
+            <p>Access existing account</p>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function goRegister() {
+    window.location.href = "register.html";
+}
+
+function goLogin() {
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

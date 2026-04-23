@@ -1,0 +1,48 @@
+ IPv4 Address. . . . . . . . . . . : 192.168.0.244
+ 
+ FastAPI is running on port :8000
+ Spring is running on 8081
+ 
+ Commands on restart Postgre SQL
+	net stop postgresql-x64-18
+	net start postgresql-x64-18
+ 
+ Command to run FAST API on multiple machines:
+  py -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  
+ How to start SpringBoot
+ Step 1: Navigate to the correct folder
+   cd "Backend Java\backend"
+
+  Step 2: Run Maven
+  & "C:\Program Files\Apache\maven\bin\mvn.cmd" clean install -DskipTests
+		 
+  & "C:\Program Files\Apache\maven\bin\mvn.cmd" spring-boot:run
+
+
+Link to the prject:
+  http://192.168.0.244:8081/index.html
+  
+  
+Pages that have to be changed:
+ > PythonAIClient.java
+    - String url = "http://192.168.0.244:8000/analyze_document";
+	
+ > register.html
+   - fetch("http://192.168.0.244:8081/api/users/register"
+   
+ > admin.html
+   - const API_BASE = "http://192.168.0.244:8081";
+ 
+ > app.js
+   - fetch(`http://192.168.0.244:8081/api/documents/upload`,
+   - fetch("http://192.168.0.244:8081/api/documents/all")
+   - fetch("http://192.168.0.244:8081/api/logs")
+   
+ > login.html
+   - fetch("http://192.168.0.244:8081/api/users/login",
+ 
+ > user.html
+   - fetch("http://192.168.0.244:8081/api/documents/upload",
+   - fetch(`http://192.168.0.244:8081/api/documents/${idToDelete}`,
+ 

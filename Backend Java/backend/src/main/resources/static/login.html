@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>User Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="home-body">
+
+<img src="home.png" class="home-icon" onclick="goHome()">
+
+<div class="login-container fade-in">
+
+    <div class="card">
+
+        <div class="logo-container">
+            <img src="logo.png" class="logo" style="width:200px;">
+        </div>
+
+        <h2>User Login</h2>
+
+        <input type="text" id="userId" placeholder="User ID">
+        <input type="password" id="password" placeholder="Password">
+
+        <button class="btn-glow" onclick="login()">Login</button>
+
+        <p id="msg" class="error"></p>
+
+    </div>
+</div>
+
+<script>
+
+function goHome() {
+    window.location.href = "index.html";
+}
+
+function login() {
+
+    //IP ADDRESS
+    fetch("http://192.168.0.244:8081/api/user/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            user_identifier: document.getElementById("userId").value,
+            password: document.getElementById("password").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.error) {
+            document.getElementById("msg").innerText = data.error;
+            return;
+        }
+
+        sessionStorage.setItem("user_identifier", data.user_identifier);
+        sessionStorage.setItem("user_id", data.user_id);
+        sessionStorage.setItem("role", "user");
+
+        window.location.href = "user.html";
+    })
+    .catch(err => {
+        document.getElementById("msg").innerText = "Login failed";
+    });
+}
+
+</script>
+
+</body>
+</html>

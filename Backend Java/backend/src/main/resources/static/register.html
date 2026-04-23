@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="home-body">
+
+<!-- HOME ICON -->
+<img src="home.png" class="home-icon" onclick="goHome()">
+
+<div class="login-container fade-in">
+
+    <div class="card">
+
+        <!-- LOGO -->
+        <div class="logo-container">
+            <img src="logo.png" class="logo" style="width:200px;">
+        </div>
+
+        <h2>Register</h2>
+
+        <!-- FORM GROUP (STACKED CLEANLY) -->
+        <div class="form-group">
+
+            <input type="text" id="name" placeholder="Full Name" class="form-input">
+
+            <input type="password" id="password" placeholder="Password" class="form-input">
+
+            <!--USER TYPE DROPDOWN -->
+            <select id="userType" class="form-input">
+                <option value="Legal Practitioner">Legal Practitioner</option>
+                <option value="Deal-Making Professional">Deal-Making Professional</option>
+            </select>
+
+            <button class="btn-glow full-btn" onclick="register()">Register</button>
+
+        </div>
+
+        <p id="msg" class="error"></p>
+
+    </div>
+
+</div>
+
+<!-- POPUP -->
+<div id="popup" class="modal">
+    <div class="modal-content">
+
+        <h3>Account Created</h3>
+
+        <p>Your User ID:</p>
+        <h2 id="generatedId"></h2>
+
+        <p>Your Password:</p>
+        <h3 id="generatedPassword"></h3>
+
+        <button class="btn-glow" onclick="proceedLogin()">
+            Proceed to Login
+        </button>
+
+    </div>
+</div>
+
+<script>
+
+function goHome() {
+    window.location.href = "index.html";
+}
+
+function register() {
+
+    //IP ADDRESS
+    fetch("http://192.168.0.244:8081/api/user/register", {   
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            name: document.getElementById("name").value,
+            password: document.getElementById("password").value,
+            user_type: document.getElementById("userType").value   
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if (data.error) {
+            document.getElementById("msg").innerText = data.error;
+            return;
+        }
+
+        // show popup
+        document.getElementById("generatedId").innerText = data.user_id;
+        document.getElementById("generatedPassword").innerText =
+            document.getElementById("password").value;
+
+        document.getElementById("popup").style.display = "flex";
+    });
+}
+
+function proceedLogin() {
+    window.location.href = "login.html";
+}
+
+</script>
+
+</body>
+</html>
