@@ -4,3 +4,5 @@ sentence-transformers
 pdfplumber
 python-docx
 scikit-learn
+sqlalchemy
+psycopg2-binary
