@@ -146,7 +146,7 @@ ALIS
 
 **Katlego Motau**
 
-Final-year Information Technology Student
+Final-year Computer Science Student
 
 Tshwane University of Technology (TUT)
 
