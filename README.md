@@ -99,6 +99,9 @@ PostgreSQL Database
 6. Results are stored in PostgreSQL and displayed to the user.
 
 ---
+## Demostration video
+[![Watch the demo](https://github.com/KatlegoMotau/ALIS_AI_ENGINE/blob/9bfdd11ffdcecb20fb1e8de4bb4022d46808962a/Alis%20thumbnail.png)](https://github.com/KatlegoMotau/ALIS_AI_ENGINE/blob/e0f08047abffd61cf81013eecfe4c9ea6db35370/ALIS%20demo%20video.mp4)
+---
 
 ## Project Structure
 
