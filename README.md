@@ -10,7 +10,7 @@ ALIS (Artificial Legal Intelligence System) is a full-stack web application deve
 
 The system automatically reviews uploaded documents against predefined legal requirements, identifies potential compliance issues, and generates detailed reports with recommendations to help users improve their documents.
 
-This project was developed as part of my final-year Information Technology studies and demonstrates the integration of modern web technologies with AI to solve a real-world problem.
+This project was developed as part of my final-year Computer Science studies and demonstrates the integration of modern web technologies with AI to solve a real-world problem.
 
 ---
 
